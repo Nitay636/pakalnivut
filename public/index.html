@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html,
+      body,
+      * {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        user-select: none;
+        touch-action: manipulation;
+      }
+      input,
+      textarea {
+        -webkit-user-select: auto;
+        user-select: auto;
+      }
+      input,
+      button {
+        font-size: 16px;
+        min-height: 44px;
+      }
+    </style>
+
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>פק״ל ניווט</title>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
+      <h1 class="text-2xl font-bold mb-4 text-center">Navigation Timer</h1>
+
+      <div class="text-center text-gray-600 mb-4">
+        Current time: <span id="current-time" class="font-semibold">--:--</span>
+      </div>
+
+      <label for="distance" class="block mb-2 text-gray-700"
+        >Enter distance (in km):</label
+      >
+      <div class="flex items-center gap-2 mb-4">
+        <button
+          id="minus-btn"
+          type="button"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-3 py-1 rounded"
+        >
+          −
+        </button>
+
+        <input
+          id="distance"
+          type="number"
+          step="0.1"
+          min="0"
+          placeholder="e.g. 5.0"
+          class="flex-1 border border-gray-300 rounded p-2 text-center"
+          readonly
+        />
+
+        <button
+          id="plus-btn"
+          type="button"
+          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-3 py-1 rounded"
+        >
+          +
+        </button>
+      </div>
+
+      <div class="flex items-center gap-1 mb-4">
+        <label for="speed" class="text-gray-700 select-none mr-2">Speed</label>
+        <input
+          id="speed"
+          type="number"
+          step="0.1"
+          min="0.1"
+          value="2.5"
+          class="w-20 border border-gray-300 rounded p-2 text-center"
+        />
+        <span class="text-gray-500">km/h</span>
+      </div>
+
+      <div class="flex items-center gap-2 mb-4">
+        <input id="add-time-checkbox" type="checkbox" class="accent-blue-500" />
+        <label for="add-time-checkbox" class="text-gray-700 select-none"
+          >Add extra time</label
+        >
+        <input
+          id="extra-minutes"
+          type="number"
+          min="0"
+          step="1"
+          value="10"
+          class="w-20 border border-gray-300 rounded p-2 text-center"
+          style="margin-left: 8px"
+        />
+        <span class="text-gray-500">min</span>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          onclick="calculateTime()"
+          class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded"
+        >
+          Calculate
+        </button>
+      </div>
+
+      <div
+        id="result"
+        class="mt-4 text-lg text-center font-medium text-green-700"
+      ></div>
+    </div>
+
+    <script>
+      function updateCurrentTime() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        const ss = String(now.getSeconds()).padStart(2, "0");
+        document.getElementById(
+          "current-time"
+        ).textContent = `${hh}:${mm}:${ss}`;
+      }
+
+      setInterval(updateCurrentTime, 1000);
+      updateCurrentTime();
+
+      function calculateTime() {
+        const distance = parseFloat(document.getElementById("distance").value);
+        if (isNaN(distance) || distance <= 0) {
+          document.getElementById("result").textContent =
+            "Please enter a valid distance.";
+          return;
+        }
+
+        const speed = parseFloat(document.getElementById("speed").value) || 2.5;
+        if (isNaN(speed) || speed <= 0) {
+          document.getElementById("result").textContent =
+            "Please enter a valid speed.";
+          return;
+        }
+
+        const now = new Date();
+        const hoursNeeded = distance / speed;
+        const arrival = new Date(now.getTime() + hoursNeeded * 60 * 60 * 1000);
+
+        let extraTime = 0;
+        if (document.getElementById("add-time-checkbox").checked) {
+          extraTime =
+            parseInt(document.getElementById("extra-minutes").value) || 0;
+          arrival.setMinutes(arrival.getMinutes() + extraTime);
+        }
+
+        const hh = String(arrival.getHours()).padStart(2, "0");
+        const mm = String(arrival.getMinutes()).padStart(2, "0");
+
+        document.getElementById(
+          "result"
+        ).textContent = `You will arrive at: ${hh}:${mm}`;
+      }
+
+      function clearFields() {
+        const input = document.getElementById("distance");
+        input.value = "4.5"; // Reset to default value
+        // input.focus(); // Remove this line to prevent keyboard from opening
+        document.getElementById("result").textContent = "";
+      }
+
+      function adjustDistance(delta) {
+        const input = document.getElementById("distance");
+        let value = parseFloat(input.value);
+        // If the field is empty or not a number, set to 5.0 before applying delta
+        if (isNaN(value)) {
+          value = 5.0;
+        }
+        value = Math.max(0, Math.round((value + delta) * 10) / 10); // Keep 1 decimal
+        input.value = value.toFixed(1);
+      }
+
+      // Long press logic for plus/minus buttons
+      function setupLongPress(btnId, delta) {
+        const btn = document.getElementById(btnId);
+        let timer = null;
+        let interval = null;
+        let isLongPress = false;
+
+        const start = (e) => {
+          e.preventDefault();
+          isLongPress = false;
+          timer = setTimeout(() => {
+            isLongPress = true;
+            interval = setInterval(() => adjustDistance(delta), 80);
+          }, 400); // 400ms to start long press
+        };
+
+        const end = (e) => {
+          clearTimeout(timer);
+          clearInterval(interval);
+          if (!isLongPress) {
+            adjustDistance(delta);
+          }
+        };
+
+        btn.addEventListener("mousedown", start);
+        btn.addEventListener("mouseup", end);
+        btn.addEventListener("mouseleave", end);
+
+        // Use { passive: false } for touch events so preventDefault works on iOS
+        btn.addEventListener("touchstart", start, { passive: false });
+        btn.addEventListener("touchend", end);
+        btn.addEventListener("touchcancel", end);
+      }
+
+      setupLongPress("minus-btn", -0.1);
+      setupLongPress("plus-btn", 0.1);
+
+      // Prevent double-tap to zoom on buttons
+      let lastTouchEnd = 0;
+      document.addEventListener(
+        "touchend",
+        function (event) {
+          if (event.target.tagName === "BUTTON") {
+            const now = new Date().getTime();
+            if (now - lastTouchEnd <= 300) {
+              event.preventDefault();
+            }
+            lastTouchEnd = now;
+          }
+        },
+        false
+      );
+
+      // Long press to enable editing on distance input
+      (function setupDistanceLongPress() {
+        const input = document.getElementById("distance");
+        let timer = null;
+
+        const start = (e) => {
+          e.preventDefault();
+          timer = setTimeout(() => {
+            input.readOnly = false;
+            input.focus();
+            // Optionally, select all text for easier editing
+            input.select();
+          }, 400); // 400ms for long press
+        };
+
+        const end = () => {
+          clearTimeout(timer);
+        };
+
+        input.addEventListener("mousedown", start);
+        input.addEventListener("mouseup", end);
+        input.addEventListener("mouseleave", end);
+        input.addEventListener("touchstart", start, { passive: false });
+        input.addEventListener("touchend", end);
+        input.addEventListener("touchcancel", end);
+
+        // Set back to readonly when input loses focus
+        input.addEventListener("blur", () => {
+          input.readOnly = true;
+        });
+      })();
+    </script>
+  </body>
+</html>

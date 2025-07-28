@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">פק״ל ניווט</string>
+    <string name="title_activity_main">פק״ל ניווט</string>
+    <string name="package_name">com.pakalnivut.app</string>
+    <string name="custom_url_scheme">com.pakalnivut.app</string>
+</resources>
