@@ -22,6 +22,32 @@
         font-size: 16px;
         min-height: 44px;
       }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+      }
+      .bubble-animate-in {
+        animation: fadeIn 0.2s ease-out forwards;
+      }
+      .bubble-animate-out {
+        animation: fadeOut 0.2s ease-in forwards;
+      }
     </style>
 
     <meta charset="utf-8" />
@@ -51,16 +77,22 @@
   </head>
   <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
+      <!-- App Name / Main Title -->
       <h1 class="text-2xl font-bold mb-4 text-center">Navigation Timer</h1>
 
+      <!-- Current Time Display -->
       <div class="text-center text-gray-600 mb-4">
         Current time: <span id="current-time" class="font-semibold">--:--</span>
       </div>
 
+      <!-- Distance Input Label -->
       <label for="distance" class="block mb-2 text-gray-700"
         >Enter distance (in km):</label
       >
+
+      <!-- Distance Input Controls (Minus, Input, Plus) -->
       <div class="flex items-center gap-2 mb-4">
+        <!-- Decrease Distance Button -->
         <button
           id="minus-btn"
           type="button"
@@ -69,6 +101,7 @@
           −
         </button>
 
+        <!-- Distance Input Field -->
         <input
           id="distance"
           type="number"
@@ -79,6 +112,7 @@
           readonly
         />
 
+        <!-- Increase Distance Button -->
         <button
           id="plus-btn"
           type="button"
@@ -88,6 +122,7 @@
         </button>
       </div>
 
+      <!-- Speed Input Controls -->
       <div class="flex items-center gap-1 mb-4">
         <label for="speed" class="text-gray-700 select-none mr-2">Speed</label>
         <input
@@ -101,6 +136,7 @@
         <span class="text-gray-500">km/h</span>
       </div>
 
+      <!-- Extra Time Controls -->
       <div class="flex items-center gap-2 mb-4">
         <input id="add-time-checkbox" type="checkbox" class="accent-blue-500" />
         <label for="add-time-checkbox" class="text-gray-700 select-none"
@@ -118,19 +154,78 @@
         <span class="text-gray-500">min</span>
       </div>
 
-      <div class="flex gap-2">
+      <!-- Name and Number Input Controls -->
+      <div class="flex items-center gap-2 mb-4">
+        <!-- Number Input -->
+        <input
+          id="user-number"
+          type="number"
+          min="0"
+          value="1"
+          class="w-24 border border-gray-300 rounded p-2 text-center"
+        />
+        <!-- Name Input -->
+        <input
+          id="user-name"
+          type="text"
+          placeholder="שם"
+          class="flex-1 border border-gray-300 rounded p-2 text-center"
+        />
+      </div>
+
+      <!-- Calculate Button -->
+      <div class="flex gap-2 mb-2">
         <button
           onclick="calculateTime()"
           class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded"
         >
-          Calculate
+          שילוח
         </button>
       </div>
 
+      <!-- Show Table Button -->
+      <div class="flex gap-2 mb-4">
+        <button
+          onclick="openTableWindow()"
+          class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded"
+        >
+          טבלת שילוחים
+        </button>
+      </div>
+
+      <div class="flex gap-2 mb-4">
+        <button
+          onclick="clearTableData()"
+          class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded"
+        >
+          נקה טבלה
+        </button>
+      </div>
+      <!-- Result Display -->
       <div
         id="result"
         class="mt-4 text-lg text-center font-medium text-green-700"
       ></div>
+    </div>
+
+    <div
+      id="summary-bubble"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white p-6 rounded-xl shadow-xl w-80 relative text-center">
+        <h2 class="text-xl font-bold mb-4">Summary</h2>
+        <p id="summary-number" class="mb-1"></p>
+        <p id="summary-name" class="mb-1"></p>
+        <p id="summary-time" class="mb-1"></p>
+        <p id="summary-distance" class="mb-1"></p>
+        <p id="summary-arrival" class="mb-4"></p>
+        <button
+          id="close-summary"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+        >
+          Close
+        </button>
+      </div>
     </div>
 
     <script>
@@ -147,12 +242,43 @@
       setInterval(updateCurrentTime, 1000);
       updateCurrentTime();
 
+      // Save table data in localStorage
+      function saveEntryToTable(entry) {
+        let table = JSON.parse(localStorage.getItem("savedTable") || "[]");
+        table.push(entry);
+        localStorage.setItem("savedTable", JSON.stringify(table));
+      }
+
+      function clearTableData() {
+        if (confirm("Are you sure you want to delete all saved entries?")) {
+          localStorage.removeItem("savedTable");
+          alert("All entries deleted.");
+        }
+      }
+
+      // Modified calculateTime to save name/number
       function calculateTime() {
         const distance = parseFloat(document.getElementById("distance").value);
         if (isNaN(distance) || distance <= 0) {
           document.getElementById("result").textContent =
             "Please enter a valid distance.";
           return;
+        }
+
+        function parseDateStr(date) {
+          const hh = String(date.getHours()).padStart(2, "0");
+          const mm = String(date.getMinutes()).padStart(2, "0");
+          return `${hh}:${mm}`;
+        }
+
+        function parseStrDate(date) {
+          const [hours, minutes] = date.split(":").map(Number);
+          const now = new Date();
+          now.setHours(hours);
+          now.setMinutes(minutes);
+          now.setSeconds(0);
+          now.setMilliseconds(0);
+          return now;
         }
 
         const speed = parseFloat(document.getElementById("speed").value) || 2.5;
@@ -164,21 +290,128 @@
 
         const now = new Date();
         const hoursNeeded = distance / speed;
-        const arrival = new Date(now.getTime() + hoursNeeded * 60 * 60 * 1000);
-
         let extraTime = 0;
         if (document.getElementById("add-time-checkbox").checked) {
           extraTime =
             parseInt(document.getElementById("extra-minutes").value) || 0;
           arrival.setMinutes(arrival.getMinutes() + extraTime);
         }
-
-        const hh = String(arrival.getHours()).padStart(2, "0");
-        const mm = String(arrival.getMinutes()).padStart(2, "0");
+        const arrival = parseDateStr(
+          new Date(now.getTime() + hoursNeeded * 60 * 60 * 1000)
+        );
+        const delivering = parseDateStr(new Date(now.getTime()));
 
         document.getElementById(
           "result"
-        ).textContent = `You will arrive at: ${hh}:${mm}`;
+        ).textContent = `You will arrive at: ${arrival}`;
+
+        // Save name and number to table
+        const userNumber = document.getElementById("user-number").value.trim();
+        const userName = document.getElementById("user-name").value.trim();
+        if (userNumber && userName) {
+          saveEntryToTable({
+            number: userNumber,
+            name: userName,
+            distance: distance,
+            speed: speed,
+            extraTime: extraTime,
+            arrival: arrival,
+            delivering: delivering,
+            // timeLeft: timeLeft,
+          });
+        }
+
+        // Show summary bubble
+        document.getElementById(
+          "summary-number"
+        ).textContent = `Number: ${userNumber}`;
+        document.getElementById(
+          "summary-name"
+        ).textContent = `Name: ${userName}`;
+        document.getElementById(
+          "summary-time"
+        ).textContent = `Current Time: ${delivering}`;
+        document.getElementById(
+          "summary-distance"
+        ).textContent = `Distance: ${distance} km`;
+        document.getElementById(
+          "summary-arrival"
+        ).textContent = `Arrival Time: ${arrival}`;
+        const bubble = document.getElementById("summary-bubble");
+        bubble.classList.remove("hidden");
+        bubble.classList.remove("bubble-animate-out");
+        bubble.classList.add("bubble-animate-in");
+
+        // Clear name field
+        document.getElementById("user-name").value = "";
+
+        // Increment number field
+        const numberInput = document.getElementById("user-number");
+        let currentNumber = parseInt(numberInput.value, 10);
+        if (!isNaN(currentNumber)) {
+          numberInput.value = currentNumber + 1;
+        }
+      }
+
+      // Open table in a new window
+      function openTableWindow() {
+        const table = JSON.parse(localStorage.getItem("savedTable") || "[]");
+        const win = window.open("", "_blank", "width=600,height=400");
+        win.document.write(`
+          <html>
+            <head>
+              <title>Saved Table</title>
+              <style>
+                body { font-family: sans-serif; padding: 20px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+                th { background: #f0f0f0; }
+              </style>
+            </head>
+            <body>
+              <h2>Saved Entries</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>חוליה</th>
+                    <th>שם המנווט</th>
+                    <th>מרחק (ק״מ)</th>
+                    <th>מהירות (ק״מ/דק׳)</th>
+                    <th>תוספת זמן (דק׳)</th>
+                    <th>ש. שילוח</th>
+                    <th>ש. משימה</th>
+                    <th>זמן שנשאר</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${
+                    table.length
+                      ? table
+                          .map(
+                            (row) => `
+                      <tr>
+                        <td>${row.number}</td>
+                        <td>${row.name}</td>
+                        <td>${row.distance}</td>
+                        <td>${row.speed}</td>
+                        <td>${row.extraTime}</td>
+                        <td>${row.arrival}</td>
+                        <td>${row.delivering}</td>
+                      </tr>
+                    `
+                          )
+                          .join("")
+                      : `<tr><td colspan="7">No entries saved.</td></tr>`
+                  }
+                </tbody>
+              </table>
+              <button onclick="window.close()" style="margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px;">
+                סגור
+              </button>
+            </body>
+          </html>
+        `);
+        win.document.close();
       }
 
       function clearFields() {
@@ -283,6 +516,21 @@
           input.readOnly = true;
         });
       })();
+
+      // Close bubble on background click or button click
+      const bubble = document.getElementById("summary-bubble");
+      document.getElementById("close-summary").addEventListener("click", () => {
+        bubble.classList.remove("bubble-animate-in");
+        bubble.classList.add("bubble-animate-out");
+        setTimeout(() => bubble.classList.add("hidden"), 200);
+      });
+      bubble.addEventListener("click", (e) => {
+        if (e.target === bubble) {
+          bubble.classList.remove("bubble-animate-in");
+          bubble.classList.add("bubble-animate-out");
+          setTimeout(() => bubble.classList.add("hidden"), 200);
+        }
+      });
     </script>
   </body>
 </html>
