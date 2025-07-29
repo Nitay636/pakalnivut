@@ -76,7 +76,7 @@
     <title>פק״ל ניווט</title>
   </head>
   <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
+    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md text-right">
       <!-- App Name / Main Title -->
       <h1 class="text-2xl font-bold mb-4 text-center">פק״ל ניווט</h1>
 
@@ -123,7 +123,7 @@
       </div>
 
       <!-- Speed Input Controls -->
-      <div class="flex items-center gap-1 mb-4">
+      <div class="flex items-center gap-1 mb-4 justify-end">
         <label for="speed" class="text-gray-700 select-none mr-2">מהירות</label>
         <input
           id="speed"
@@ -137,7 +137,7 @@
       </div>
 
       <!-- Extra Time Controls -->
-      <div class="flex items-center gap-2 mb-4">
+      <div class="flex items-center gap-2 mb-4 justify-end">
         <input id="add-time-checkbox" type="checkbox" class="accent-blue-500" />
         <label for="add-time-checkbox" class="text-gray-700 select-none"
           >הוספת זמן</label
@@ -207,29 +207,33 @@
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
       >
         <div
-          class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl relative overflow-auto max-h-[90vh]"
+          class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl max-h-screen relative overflow-auto m-4"
         >
-          <h2 class="text-xl font-bold mb-4 text-center">דף עזר</h2>
-          <table class="w-full border border-collapse text-sm">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="border p-2">חוליה</th>
-                <th class="border p-2">שם המנווט</th>
-                <th class="border p-2">מרחק (ק״מ)</th>
-                <th class="border p-2">מהירות (ק״מ/ש׳)</th>
-                <th class="border p-2">תוספת זמן (דק׳)</th>
-                <th class="border p-2">ש. שילוח</th>
-                <th class="border p-2">ש. משימה</th>
-              </tr>
-            </thead>
-            <tbody id="saved-table-body"></tbody>
-          </table>
-          <button
-            onclick="closeSavedTable()"
-            class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded block mx-auto"
-          >
-            סגור
-          </button>
+          <h2 class="text-xl font-bold mb-4 text-center">היסטורית שילוחים</h2>
+          <div class="flex flex-col items-center justify-center">
+            <table
+              class="w-full table-auto border border-collapse text-xs text-center"
+            >
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="border px-1 py-0.5">חוליה</th>
+                  <th class="border px-1 py-0.5">שם המנווט</th>
+                  <th class="border px-1 py-0.5">מרחק (ק״מ)</th>
+                  <th class="border px-1 py-0.5">מהירות (ק״מ/ש׳)</th>
+                  <th class="border px-1 py-0.5">תוספת זמן (דק׳)</th>
+                  <th class="border px-1 py-0.5">ש. שילוח</th>
+                  <th class="border px-1 py-0.5">ש. משימה</th>
+                </tr>
+              </thead>
+              <tbody id="saved-table-body"></tbody>
+            </table>
+            <button
+              onclick="closeSavedTable()"
+              class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+            >
+              סגור
+            </button>
+          </div>
         </div>
       </div>
       <!-- Result Display -->
@@ -392,19 +396,19 @@
           table.forEach((row) => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-              <td class="border p-2">${row.number}</td>
-              <td class="border p-2">${row.name}</td>
-              <td class="border p-2">${row.distance}</td>
-              <td class="border p-2">${row.speed}</td>
-              <td class="border p-2">${row.extraTime}</td>
-              <td class="border p-2">${row.delivering}</td>
-              <td class="border p-2">${row.arrival}</td>
+              <td class="border px-1 py-0.5">${row.number}</td>
+              <td class="border px-1 py-0.5">${row.name}</td>
+              <td class="border px-1 py-0.5">${row.distance}</td>
+              <td class="border px-1 py-0.5">${row.speed}</td>
+              <td class="border px-1 py-0.5">${row.extraTime}</td>
+              <td class="border px-1 py-0.5">${row.delivering}</td>
+              <td class="border px-1 py-0.5">${row.arrival}</td>
             `;
             tbody.appendChild(tr);
           });
         } else {
           const tr = document.createElement("tr");
-          tr.innerHTML = `<td colspan="7" class="border p-2 text-center">לא השתלחו חוליות עדיין</td>`;
+          tr.innerHTML = `<td colspan="7" class="border px-1 py-0.5 text-center">לא השתלחו חוליות עדיין</td>`;
           tbody.appendChild(tr);
         }
 
