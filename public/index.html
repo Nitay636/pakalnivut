@@ -78,16 +78,16 @@
   <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
       <!-- App Name / Main Title -->
-      <h1 class="text-2xl font-bold mb-4 text-center">Navigation Timer</h1>
+      <h1 class="text-2xl font-bold mb-4 text-center">פק״ל ניווט</h1>
 
       <!-- Current Time Display -->
       <div class="text-center text-gray-600 mb-4">
-        Current time: <span id="current-time" class="font-semibold">--:--</span>
+        שעה נוכחית: <span id="current-time" class="font-semibold">--:--</span>
       </div>
 
       <!-- Distance Input Label -->
       <label for="distance" class="block mb-2 text-gray-700"
-        >Enter distance (in km):</label
+        >אורך ציר (בקילומטרים):</label
       >
 
       <!-- Distance Input Controls (Minus, Input, Plus) -->
@@ -107,7 +107,7 @@
           type="number"
           step="0.1"
           min="0"
-          placeholder="e.g. 5.0"
+          value="5"
           class="flex-1 border border-gray-300 rounded p-2 text-center"
           readonly
         />
@@ -124,7 +124,7 @@
 
       <!-- Speed Input Controls -->
       <div class="flex items-center gap-1 mb-4">
-        <label for="speed" class="text-gray-700 select-none mr-2">Speed</label>
+        <label for="speed" class="text-gray-700 select-none mr-2">מהירות</label>
         <input
           id="speed"
           type="number"
@@ -133,14 +133,14 @@
           value="2.5"
           class="w-20 border border-gray-300 rounded p-2 text-center"
         />
-        <span class="text-gray-500">km/h</span>
+        <span class="text-gray-500">קמ״ש</span>
       </div>
 
       <!-- Extra Time Controls -->
       <div class="flex items-center gap-2 mb-4">
         <input id="add-time-checkbox" type="checkbox" class="accent-blue-500" />
         <label for="add-time-checkbox" class="text-gray-700 select-none"
-          >Add extra time</label
+          >הוספת זמן</label
         >
         <input
           id="extra-minutes"
@@ -151,7 +151,7 @@
           class="w-20 border border-gray-300 rounded p-2 text-center"
           style="margin-left: 8px"
         />
-        <span class="text-gray-500">min</span>
+        <span class="text-gray-500">דקות</span>
       </div>
 
       <!-- Name and Number Input Controls -->
@@ -200,6 +200,37 @@
         >
           נקה טבלה
         </button>
+      </div>
+      <!-- Saved Table Display -->
+      <div
+        id="saved-table-container"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+      >
+        <div
+          class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl relative overflow-auto max-h-[90vh]"
+        >
+          <h2 class="text-xl font-bold mb-4 text-center">דף עזר</h2>
+          <table class="w-full border border-collapse text-sm">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="border p-2">חוליה</th>
+                <th class="border p-2">שם המנווט</th>
+                <th class="border p-2">מרחק (ק״מ)</th>
+                <th class="border p-2">מהירות (ק״מ/ש׳)</th>
+                <th class="border p-2">תוספת זמן (דק׳)</th>
+                <th class="border p-2">ש. שילוח</th>
+                <th class="border p-2">ש. משימה</th>
+              </tr>
+            </thead>
+            <tbody id="saved-table-body"></tbody>
+          </table>
+          <button
+            onclick="closeSavedTable()"
+            class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded block mx-auto"
+          >
+            סגור
+          </button>
+        </div>
       </div>
       <!-- Result Display -->
       <div
@@ -324,19 +355,17 @@
         // Show summary bubble
         document.getElementById(
           "summary-number"
-        ).textContent = `Number: ${userNumber}`;
-        document.getElementById(
-          "summary-name"
-        ).textContent = `Name: ${userName}`;
+        ).textContent = `חוליה: ${userNumber}`;
+        document.getElementById("summary-name").textContent = `שם: ${userName}`;
         document.getElementById(
           "summary-time"
-        ).textContent = `Current Time: ${delivering}`;
+        ).textContent = `ש. שילוח: ${delivering}`;
         document.getElementById(
           "summary-distance"
-        ).textContent = `Distance: ${distance} km`;
+        ).textContent = `אורך ציר: ${distance} ק״מ`;
         document.getElementById(
           "summary-arrival"
-        ).textContent = `Arrival Time: ${arrival}`;
+        ).textContent = `זמן משימה: ${arrival}`;
         const bubble = document.getElementById("summary-bubble");
         bubble.classList.remove("hidden");
         bubble.classList.remove("bubble-animate-out");
@@ -353,65 +382,41 @@
         }
       }
 
-      // Open table in a new window
+      // Open saved table in modal
       function openTableWindow() {
         const table = JSON.parse(localStorage.getItem("savedTable") || "[]");
-        const win = window.open("", "_blank", "width=600,height=400");
-        win.document.write(`
-          <html>
-            <head>
-              <title>Saved Table</title>
-              <style>
-                body { font-family: sans-serif; padding: 20px; }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-                th { background: #f0f0f0; }
-              </style>
-            </head>
-            <body>
-              <h2>Saved Entries</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>חוליה</th>
-                    <th>שם המנווט</th>
-                    <th>מרחק (ק״מ)</th>
-                    <th>מהירות (ק״מ/דק׳)</th>
-                    <th>תוספת זמן (דק׳)</th>
-                    <th>ש. שילוח</th>
-                    <th>ש. משימה</th>
-                    <th>זמן שנשאר</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${
-                    table.length
-                      ? table
-                          .map(
-                            (row) => `
-                      <tr>
-                        <td>${row.number}</td>
-                        <td>${row.name}</td>
-                        <td>${row.distance}</td>
-                        <td>${row.speed}</td>
-                        <td>${row.extraTime}</td>
-                        <td>${row.arrival}</td>
-                        <td>${row.delivering}</td>
-                      </tr>
-                    `
-                          )
-                          .join("")
-                      : `<tr><td colspan="7">No entries saved.</td></tr>`
-                  }
-                </tbody>
-              </table>
-              <button onclick="window.close()" style="margin-top: 20px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px;">
-                סגור
-              </button>
-            </body>
-          </html>
-        `);
-        win.document.close();
+        const tbody = document.getElementById("saved-table-body");
+        tbody.innerHTML = "";
+
+        if (table.length) {
+          table.forEach((row) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td class="border p-2">${row.number}</td>
+              <td class="border p-2">${row.name}</td>
+              <td class="border p-2">${row.distance}</td>
+              <td class="border p-2">${row.speed}</td>
+              <td class="border p-2">${row.extraTime}</td>
+              <td class="border p-2">${row.delivering}</td>
+              <td class="border p-2">${row.arrival}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="7" class="border p-2 text-center">לא השתלחו חוליות עדיין</td>`;
+          tbody.appendChild(tr);
+        }
+
+        document
+          .getElementById("saved-table-container")
+          .classList.remove("hidden");
+      }
+
+      function closeSavedTable() {
+        document
+          .getElementById("saved-table-container")
+          .classList.add("hidden");
       }
 
       function clearFields() {
