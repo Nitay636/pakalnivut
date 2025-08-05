@@ -40,8 +40,57 @@ function selectNavigator(n) {
   });
 }
 
+function getTimeGap(current, arrival) {
+  const [ch, cm] = current.split(":").map(Number);
+  const [ah, am] = arrival.split(":").map(Number);
+  let start = new Date();
+  let end = new Date();
+  start.setHours(ch, cm, 0, 0);
+  end.setHours(ah, am, 0, 0);
+  let diff = (end - start) / 60000;
+  if (diff < 0) diff += 24 * 60;
+  const hours = Math.floor(diff / 60);
+  const mins = Math.round(diff % 60);
+  return `${hours}:${mins.toString().padStart(2, "0")}`;
+}
+
+// Helper to get color class based on time left
+function getTimeGapColor(gapStr) {
+  const [h, m] = gapStr.split(":").map(Number);
+  const totalMinutes = h * 60 + m;
+  if (totalMinutes < 10) return "text-red-500 font-bold";
+  if (totalMinutes < 30) return "text-orange-500 font-bold";
+  if (totalMinutes > 1260) return "text-red-700 font-bold"; // More than 21 hours
+  return "text-green-600 font-bold";
+}
+
+// missing data
+function missingData() {
+  const distance = document.getElementById("distance").value.trim();
+  const speed = document.getElementById("speed").value.trim();
+  const userNumber = document.getElementById("user-number").value.trim();
+  const userName = document.getElementById("user-name").value.trim();
+  if (
+    !distance ||
+    isNaN(distance) ||
+    distance <= 0 ||
+    isNaN(speed) ||
+    speed <= 0 ||
+    !userNumber ||
+    !userName
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // Modified calculateTime to use navigator toggle and name
 function calculateTime() {
+  if (missingData()) {
+    alert("יש למלא את כל הפרטים של המנווט");
+    return;
+  }
   const navigatorNum = document.getElementById("navigator-select").value;
   const userNumber = document.getElementById("user-number").value.trim();
   const userName = document.getElementById("user-name").value.trim();
@@ -62,24 +111,8 @@ function calculateTime() {
   const delivering = `${String(now.getHours()).padStart(2, "0")}:${String(
     now.getMinutes()
   ).padStart(2, "0")}`;
-  function getTimeGap(current, arrival) {
-    const [ch, cm] = current.split(":").map(Number);
-    const [ah, am] = arrival.split(":").map(Number);
-    let start = new Date();
-    let end = new Date();
-    start.setHours(ch, cm, 0, 0);
-    end.setHours(ah, am, 0, 0);
-    let diff = (end - start) / 60000;
-    if (diff < 0) diff += 24 * 60;
-    const hours = Math.floor(diff / 60);
-    const mins = Math.round(diff % 60);
-    return `${hours}:${mins.toString().padStart(2, "0")}`;
-  }
-  const timeGap = getTimeGap(delivering, arrival);
 
-  document.getElementById(
-    "result"
-  ).textContent = `You will arrive at: ${arrival}`;
+  const timeGap = getTimeGap(delivering, arrival);
 
   // Save to table for selected navigator
   let tableKey = `savedTable_${navigatorNum}`;
@@ -117,7 +150,39 @@ function calculateTime() {
   bubble.classList.add("bubble-animate-in");
 }
 
-// Open saved table in modal
+// Update time gap column for all rows in the table
+function updateTableTimeGaps() {
+  const navigatorNum = document.getElementById("navigator-select").value;
+  const tableKey = `savedTable_${navigatorNum}`;
+  const table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+  const tbody = document.getElementById("saved-table-body");
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+    now.getMinutes()
+  ).padStart(2, "0")}`;
+
+  Array.from(tbody.children).forEach((tr, idx) => {
+    if (table[idx]) {
+      const arrival = table[idx].arrival;
+      const gap = getTimeGap(currentTime, arrival);
+      const td = tr.children[6];
+      if (td) {
+        td.textContent = gap;
+        td.className = `border px-1 py-0.5 ${getTimeGapColor(gap)}`;
+      }
+    }
+  });
+}
+
+// Call updateTableTimeGaps every time the time changes and the table is open
+setInterval(() => {
+  const tableContainer = document.getElementById("saved-table-container");
+  if (tableContainer && !tableContainer.classList.contains("hidden")) {
+    updateTableTimeGaps();
+  }
+}, 5000); // Update every 5 second for real-time accuracy
+
+// Open saved table in modal and update time gaps
 function openTableWindow() {
   const navigatorNum = document.getElementById("navigator-select").value;
   const tableKey = `savedTable_${navigatorNum}`;
@@ -126,17 +191,22 @@ function openTableWindow() {
   tbody.innerHTML = "";
 
   if (table.length) {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
     table.forEach((row) => {
+      const gap = getTimeGap(currentTime, row.arrival);
+      const gapColor = getTimeGapColor(gap);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="border px-1 py-0.5">${row.number}</td>
         <td class="border px-1 py-0.5">${row.name}</td>
         <td class="border px-1 py-0.5">${row.distance}</td>
         <td class="border px-1 py-0.5">${row.speed}</td>
-        <td class="border px-1 py-0.5">${row.extraTime}</td>
         <td class="border px-1 py-0.5">${row.delivering}</td>
         <td class="border px-1 py-0.5">${row.arrival}</td>
-        <td class="border px-1 py-0.5">${row.timeGap || ""}</td>
+        <td class="border px-1 py-0.5 ${gapColor}">${gap}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -147,8 +217,18 @@ function openTableWindow() {
   }
 
   document.getElementById("saved-table-container").classList.remove("hidden");
+  updateTableTimeGaps();
 }
 
+// Update time gaps every minute when table is visible
+setInterval(() => {
+  const tableContainer = document.getElementById("saved-table-container");
+  if (tableContainer && !tableContainer.classList.contains("hidden")) {
+    updateTableTimeGaps();
+  }
+}, 60000);
+
+// Close saved table modal
 function closeSavedTable() {
   document.getElementById("saved-table-container").classList.add("hidden");
 }
