@@ -105,7 +105,7 @@ function renderTableRows(table, currentTime) {
   tbody.innerHTML = "";
 
   if (table.length) {
-    table.forEach((row) => {
+    table.forEach((row, idx) => {
       const gap = getTimeGap(currentTime, row.arrival);
       const gapColor = getTimeGapColor(gap);
       const tr = document.createElement("tr");
@@ -113,13 +113,152 @@ function renderTableRows(table, currentTime) {
         <td class="border px-1 py-0.5">${row.number}</td>
         <td class="border px-1 py-0.5">${row.name}</td>
         <td class="border px-1 py-0.5">${row.distance}</td>
-        <td class="border px-1 py-0.5">${row.speed}</td>
+        <td class="border px-1 py-0.5 spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
+          <span style="display:inline-flex;align-items:center;justify-content:center;">
+            ${row.spots}
+            <span style="font-size:1em;margin-right:4px;color:#787878;">&#8593;</span>
+          </span>
+        </td>
         <td class="border px-1 py-0.5">${row.delivering}</td>
         <td class="border px-1 py-0.5">${row.arrival}</td>
         <td class="border px-1 py-0.5 ${gapColor}">${gap}</td>
       `;
       tbody.appendChild(tr);
     });
+
+    // Add event delegation for spot cell click and long press
+    if (!tbody._spotCellDelegated) {
+      let longPressTimer = null;
+      let longPressTriggered = false;
+
+      // Desktop: click and long press
+      tbody.addEventListener("mousedown", function (e) {
+        const cell = e.target.closest(".spot-cell");
+        if (!cell) return;
+        longPressTriggered = false;
+        longPressTimer = setTimeout(() => {
+          longPressTriggered = true;
+          const rowIdx = parseInt(cell.dataset.row, 10);
+          const navigatorNum =
+            document.getElementById("navigator-select").value;
+          const tableKey = `savedTable_${navigatorNum}`;
+          let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+          table[rowIdx].spots = 0;
+          localStorage.setItem(tableKey, JSON.stringify(table));
+          const now = new Date();
+          const currentTime = `${String(now.getHours()).padStart(
+            2,
+            "0"
+          )}:${String(now.getMinutes()).padStart(2, "0")}`;
+          renderTableRows(table, currentTime);
+          updateTableTimeGaps();
+          longPressTimer = null;
+        }, 600);
+      });
+
+      tbody.addEventListener("mouseup", function () {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      });
+
+      tbody.addEventListener("mouseleave", function () {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      });
+
+      tbody.addEventListener("click", function (e) {
+        if (window._justTouched) {
+          window._justTouched = false;
+          return; // Prevent double increment after touch
+        }
+        const cell = e.target.closest(".spot-cell");
+        if (!cell) return;
+        if (longPressTriggered) {
+          longPressTriggered = false;
+          return;
+        }
+        const rowIdx = parseInt(cell.dataset.row, 10);
+        const navigatorNum = document.getElementById("navigator-select").value;
+        const tableKey = `savedTable_${navigatorNum}`;
+        let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+        table[rowIdx].spots = (table[rowIdx].spots || 0) + 1;
+        localStorage.setItem(tableKey, JSON.stringify(table));
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(
+          2,
+          "0"
+        )}:${String(now.getMinutes()).padStart(2, "0")}`;
+        renderTableRows(table, currentTime);
+        updateTableTimeGaps();
+      });
+
+      // Mobile: touch events
+      tbody.addEventListener("touchstart", function (e) {
+        const cell = e.target.closest(".spot-cell");
+        if (!cell) return;
+        longPressTriggered = false;
+        longPressTimer = setTimeout(() => {
+          longPressTriggered = true;
+          const rowIdx = parseInt(cell.dataset.row, 10);
+          const navigatorNum =
+            document.getElementById("navigator-select").value;
+          const tableKey = `savedTable_${navigatorNum}`;
+          let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+          table[rowIdx].spots = 0;
+          localStorage.setItem(tableKey, JSON.stringify(table));
+          const now = new Date();
+          const currentTime = `${String(now.getHours()).padStart(
+            2,
+            "0"
+          )}:${String(now.getMinutes()).padStart(2, "0")}`;
+          renderTableRows(table, currentTime);
+          updateTableTimeGaps();
+          longPressTimer = null;
+        }, 600);
+      });
+
+      tbody.addEventListener("touchend", function (e) {
+        const cell = e.target.closest(".spot-cell");
+        if (!cell) return;
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+          if (!longPressTriggered) {
+            // Treat as tap/increment
+            const rowIdx = parseInt(cell.dataset.row, 10);
+            const navigatorNum =
+              document.getElementById("navigator-select").value;
+            const tableKey = `savedTable_${navigatorNum}`;
+            let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+            table[rowIdx].spots = (table[rowIdx].spots || 0) + 1;
+            localStorage.setItem(tableKey, JSON.stringify(table));
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(
+              2,
+              "0"
+            )}:${String(now.getMinutes()).padStart(2, "0")}`;
+            renderTableRows(table, currentTime);
+            updateTableTimeGaps();
+            window._justTouched = true; // Block next click event
+          }
+        }
+        longPressTriggered = false;
+      });
+
+      tbody.addEventListener("touchcancel", function () {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        longPressTriggered = false;
+      });
+
+      tbody._spotCellDelegated = true;
+    }
   } else {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="7" class="border px-1 py-0.5 text-center">לא השתלחו חוליות עדיין</td>`;
@@ -161,6 +300,13 @@ function openTableWindow() {
     now.getMinutes()
   ).padStart(2, "0")}`;
   renderTableRows(table, currentTime);
+
+  // Update the table title with the navigator number
+  const titleElem = document.getElementById("table-title");
+  if (titleElem) {
+    titleElem.textContent = `היסטוריית שילוחים מנווט ${navigatorNum}`;
+  }
+
   document.getElementById("saved-table-container").classList.remove("hidden");
   updateTableTimeGaps();
 }
@@ -179,13 +325,6 @@ function closeTableWindow() {
 }
 
 // -------------------- Form & UI Logic --------------------
-
-// Clear fields and reset result
-function clearFields() {
-  const input = document.getElementById("distance");
-  input.value = "4.5";
-  document.getElementById("result").textContent = "";
-}
 
 // Adjust distance input by delta
 function adjustDistance(delta) {
@@ -287,13 +426,13 @@ function showSummaryBubble(
   ).textContent = `חוליה: ${userNumber}`;
   document.getElementById("summary-name").textContent = `שם: ${userName}`;
   document.getElementById(
-    "summary-time"
+    "summary-distance"
   ).textContent = `אורך ציר: ${distance} ק״מ`;
   document.getElementById(
-    "summary-arrival"
+    "summary-time"
   ).textContent = `ש. שילוח: ${delivering}`;
   document.getElementById(
-    "summary-distance"
+    "summary-arrival"
   ).textContent = `ש. משימה: ${arrival}`;
   const bubble = document.getElementById("summary-bubble");
   bubble.classList.remove("hidden");
@@ -329,6 +468,7 @@ function calculateTime() {
   const userName = document.getElementById("user-name").value.trim();
   const distance = parseFloat(document.getElementById("distance").value);
   const speed = parseFloat(document.getElementById("speed").value) || 2.5;
+  const spots = 0;
   let extraTime = 0;
   if (document.getElementById("add-time-checkbox").checked) {
     extraTime = parseInt(document.getElementById("extra-minutes").value) || 0;
@@ -353,7 +493,7 @@ function calculateTime() {
       number: userNumber,
       name: userName,
       distance,
-      speed,
+      spots,
       extraTime,
       delivering,
       arrival,
@@ -363,7 +503,9 @@ function calculateTime() {
   );
 
   // Show summary bubble
-  showSummaryBubble(userNumber, userName, delivering, distance, arrival);
+  showSummaryBubble(userNumber, userName, distance, delivering, arrival);
+  document.getElementById("user-name").value = "";
+  document.getElementById("user-number").value = parseInt(userNumber) + 1;
 }
 
 // -------------------- Initial Setup --------------------
@@ -371,7 +513,7 @@ function calculateTime() {
 // Set initial values for fields
 document.getElementById("user-name").value = "";
 document.getElementById("user-number").value = "1";
-document.getElementById("distance").value = "4.5";
+document.getElementById("distance").value = "5.0";
 
 // Show navigator buttons if there is data
 ["1", "2"].forEach((n) => {

@@ -235,7 +235,9 @@
         <div
           class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl max-h-screen relative overflow-auto m-4"
         >
-          <h2 class="text-xl font-bold mb-4 text-center">היסטורית שילוחים</h2>
+          <h2 id="table-title" class="text-xl font-bold mb-4 text-center">
+            היסטוריית שילוחים
+          </h2>
           <div class="flex flex-col items-center justify-center">
             <table
               dir="rtl"
@@ -246,7 +248,7 @@
                   <th class="border px-1 py-0.5">חוליה</th>
                   <th class="border px-1 py-0.5">שם המנווט</th>
                   <th class="border px-1 py-0.5">מרחק (ק״מ)</th>
-                  <th class="border px-1 py-0.5">מהירות (ק״מ/ש׳)</th>
+                  <th class="border px-1 py-0.5">נקודות שנדקרו</th>
                   <th class="border px-1 py-0.5">ש. שילוח</th>
                   <th class="border px-1 py-0.5">ש. משימה</th>
                   <th class="border px-1 py-0.5">זמן שנותר</th>
@@ -273,8 +275,8 @@
         <h2 class="text-xl font-bold mb-4">Summary</h2>
         <p id="summary-number" class="mb-1"></p>
         <p id="summary-name" class="mb-1"></p>
-        <p id="summary-time" class="mb-1"></p>
         <p id="summary-distance" class="mb-1"></p>
+        <p id="summary-time" class="mb-1"></p>
         <p id="summary-arrival" class="mb-4"></p>
         <button
           id="close-summary"
