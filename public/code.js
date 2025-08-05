@@ -89,11 +89,12 @@ function saveEntryToTable(entry, navigatorNum) {
 }
 
 // Clear all tables for both navigators
+// eslint-disable-next-line no-unused-vars
 function clearTableData() {
-  if (confirm("Are you sure you want to delete all saved entries?")) {
+  if (window.confirm("האם אתה בטוח שאתה רוצה למחוק את כל החוליות שמנווטות?")) {
     localStorage.removeItem("savedTable_1");
     localStorage.removeItem("savedTable_2");
-    alert("All entries deleted.");
+    document.getElementById("user-number").value = "1";
   }
 }
 
@@ -246,7 +247,7 @@ function renderTableRows(table, currentTime) {
             window._justTouched = true; // Block next click event
           }
         }
-        longPressTriggered = false;
+        longPressTriggered = false; // Always reset the flag
       });
 
       tbody.addEventListener("touchcancel", function () {
@@ -291,6 +292,7 @@ function updateTableTimeGaps() {
 }
 
 // Show the table modal and render/update time gaps
+// eslint-disable-next-line no-unused-vars
 function openTableWindow() {
   const navigatorNum = document.getElementById("navigator-select").value;
   const tableKey = `savedTable_${navigatorNum}`;
@@ -320,6 +322,7 @@ setInterval(() => {
 }, 5000);
 
 // Close the table modal
+// eslint-disable-next-line no-unused-vars
 function closeTableWindow() {
   document.getElementById("saved-table-container").classList.add("hidden");
 }
@@ -458,6 +461,7 @@ bubble.addEventListener("click", (e) => {
 // -------------------- Main Calculation Logic --------------------
 
 // Main calculate function
+// eslint-disable-next-line no-unused-vars
 function calculateTime() {
   if (missingData()) {
     alert("יש למלא את כל הפרטים של המנווט");
