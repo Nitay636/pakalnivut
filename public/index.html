@@ -154,7 +154,33 @@
         <span class="text-gray-500">דקות</span>
       </div>
 
-      <!-- Name and Number Input Controls -->
+      <!-- Place this above the name/number fields in your form -->
+      <div class="flex items-center gap-2 mb-4 justify-end">
+        <div class="flex">
+          <button
+            id="navigator-btn-1"
+            type="button"
+            data-navigator="1"
+            class="px-4 py-1 rounded-l border border-blue-500 bg-blue-500 text-white font-bold"
+            onclick="selectNavigator(1)"
+          >
+            1
+          </button>
+          <button
+            id="navigator-btn-2"
+            type="button"
+            data-navigator="2"
+            class="px-4 py-1 rounded-r border border-blue-500 bg-white text-blue-500 font-bold"
+            onclick="selectNavigator(2)"
+          >
+            2
+          </button>
+        </div>
+        <input id="navigator-select" type="hidden" value="1" />
+        <label class="text-gray-700 mr-2">מנווט</label>
+      </div>
+
+      <!-- Number and Name Input Controls -->
       <div class="flex items-center gap-2 mb-4">
         <!-- Number Input -->
         <input
@@ -212,6 +238,7 @@
           <h2 class="text-xl font-bold mb-4 text-center">היסטורית שילוחים</h2>
           <div class="flex flex-col items-center justify-center">
             <table
+              dir="rtl"
               class="w-full table-auto border border-collapse text-xs text-center"
             >
               <thead class="bg-gray-100">

@@ -3,9 +3,7 @@ function updateCurrentTime() {
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   const ss = String(now.getSeconds()).padStart(2, "0");
-  document.getElementById(
-    "current-time"
-  ).textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById("current-time").textContent = `${hh}:${mm}:${ss}`;
 }
 
 setInterval(updateCurrentTime, 1000);
@@ -20,55 +18,50 @@ function saveEntryToTable(entry) {
 
 function clearTableData() {
   if (confirm("Are you sure you want to delete all saved entries?")) {
-    localStorage.removeItem("savedTable");
+    localStorage.removeItem("savedTable_1");
+    localStorage.removeItem("savedTable_2");
     alert("All entries deleted.");
   }
 }
 
-// Modified calculateTime to save name/number
+// Highlight toggle logic
+function selectNavigator(n) {
+  document.getElementById("navigator-select").value = n;
+
+  ["navigator-btn-1", "navigator-btn-2"].forEach((id, idx) => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      const active = idx + 1 === Number(n);
+      btn.classList.toggle("bg-blue-500", active);
+      btn.classList.toggle("text-white", active);
+      btn.classList.toggle("bg-white", !active);
+      btn.classList.toggle("text-blue-500", !active);
+    }
+  });
+}
+
+// Modified calculateTime to use navigator toggle and name
 function calculateTime() {
+  const navigatorNum = document.getElementById("navigator-select").value;
+  const userNumber = document.getElementById("user-number").value.trim();
+  const userName = document.getElementById("user-name").value.trim();
   const distance = parseFloat(document.getElementById("distance").value);
-  if (isNaN(distance) || distance <= 0) {
-    document.getElementById("result").textContent =
-      "Please enter a valid distance.";
-    return;
-  }
-
-  function parseDateStr(date) {
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
-  function parseStrDate(date) {
-    const [hours, minutes] = date.split(":").map(Number);
-    const now = new Date();
-    now.setHours(hours);
-    now.setMinutes(minutes);
-    now.setSeconds(0);
-    now.setMilliseconds(0);
-    return now;
-  }
-
   const speed = parseFloat(document.getElementById("speed").value) || 2.5;
-  if (isNaN(speed) || speed <= 0) {
-    document.getElementById("result").textContent =
-      "Please enter a valid speed.";
-    return;
-  }
-
-  const now = new Date();
-  const hoursNeeded = distance / speed;
   let extraTime = 0;
   if (document.getElementById("add-time-checkbox").checked) {
-    extraTime =
-      parseInt(document.getElementById("extra-minutes").value) || 0;
+    extraTime = parseInt(document.getElementById("extra-minutes").value) || 0;
   }
-  const arrivalDate = new Date(now.getTime() + hoursNeeded * 60 * 60 * 1000 + extraTime * 60000);
-  const arrival = parseDateStr(arrivalDate);
-  const delivering = parseDateStr(now);
-
-  // Calculate time gap
+  const now = new Date();
+  const hoursNeeded = distance / speed;
+  const arrivalDate = new Date(
+    now.getTime() + hoursNeeded * 60 * 60 * 1000 + extraTime * 60000
+  );
+  const arrival = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(
+    arrivalDate.getMinutes()
+  ).padStart(2, "0")}`;
+  const delivering = `${String(now.getHours()).padStart(2, "0")}:${String(
+    now.getMinutes()
+  ).padStart(2, "0")}`;
   function getTimeGap(current, arrival) {
     const [ch, cm] = current.split(":").map(Number);
     const [ah, am] = arrival.split(":").map(Number);
@@ -76,8 +69,8 @@ function calculateTime() {
     let end = new Date();
     start.setHours(ch, cm, 0, 0);
     end.setHours(ah, am, 0, 0);
-    let diff = (end - start) / 60000; // difference in minutes
-    if (diff < 0) diff += 24 * 60; // handle next day
+    let diff = (end - start) / 60000;
+    if (diff < 0) diff += 24 * 60;
     const hours = Math.floor(diff / 60);
     const mins = Math.round(diff % 60);
     return `${hours}:${mins.toString().padStart(2, "0")}`;
@@ -88,23 +81,23 @@ function calculateTime() {
     "result"
   ).textContent = `You will arrive at: ${arrival}`;
 
-  // Save name and number to table
-  const userNumber = document.getElementById("user-number").value.trim();
-  const userName = document.getElementById("user-name").value.trim();
-  if (userNumber && userName) {
-    saveEntryToTable({
-      number: userNumber,
-      name: userName,
-      distance: distance,
-      speed: speed,
-      extraTime: extraTime,
-      arrival: arrival,
-      delivering: delivering,
-      timeGap: timeGap,
-    });
-  }
+  // Save to table for selected navigator
+  let tableKey = `savedTable_${navigatorNum}`;
+  let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+  table.push({
+    navigatorNum,
+    number: userNumber,
+    name: userName,
+    distance,
+    speed,
+    extraTime,
+    delivering,
+    arrival,
+    timeGap,
+  });
+  localStorage.setItem(tableKey, JSON.stringify(table));
 
-  // Show summary bubble
+  // Show summary bubble (optional, update as needed)
   document.getElementById(
     "summary-number"
   ).textContent = `חוליה: ${userNumber}`;
@@ -122,21 +115,13 @@ function calculateTime() {
   bubble.classList.remove("hidden");
   bubble.classList.remove("bubble-animate-out");
   bubble.classList.add("bubble-animate-in");
-
-  // Clear name field
-  document.getElementById("user-name").value = "";
-
-  // Increment number field
-  const numberInput = document.getElementById("user-number");
-  let currentNumber = parseInt(numberInput.value, 10);
-  if (!isNaN(currentNumber)) {
-    numberInput.value = currentNumber + 1;
-  }
 }
 
 // Open saved table in modal
 function openTableWindow() {
-  const table = JSON.parse(localStorage.getItem("savedTable") || "[]");
+  const navigatorNum = document.getElementById("navigator-select").value;
+  const tableKey = `savedTable_${navigatorNum}`;
+  const table = JSON.parse(localStorage.getItem(tableKey) || "[]");
   const tbody = document.getElementById("saved-table-body");
   tbody.innerHTML = "";
 
@@ -161,15 +146,11 @@ function openTableWindow() {
     tbody.appendChild(tr);
   }
 
-  document
-    .getElementById("saved-table-container")
-    .classList.remove("hidden");
+  document.getElementById("saved-table-container").classList.remove("hidden");
 }
 
 function closeSavedTable() {
-  document
-    .getElementById("saved-table-container")
-    .classList.add("hidden");
+  document.getElementById("saved-table-container").classList.add("hidden");
 }
 
 function clearFields() {
@@ -282,4 +263,37 @@ document.getElementById("close-summary").addEventListener("click", () => {
   setTimeout(() => bubble.classList.add("hidden"), 200);
 });
 bubble.addEventListener("click", (e) => {
-  if (e.target === bubble)
+  if (e.target === bubble) {
+    bubble.classList.remove("bubble-animate-in");
+    bubble.classList.add("bubble-animate-out");
+    setTimeout(() => bubble.classList.add("hidden"), 200);
+  }
+});
+
+// Initial setup
+document.getElementById("user-name").value = "";
+document.getElementById("user-number").value = "1";
+
+// Load saved tables into navigator buttons
+["1", "2"].forEach((n) => {
+  const tableKey = `savedTable_${n}`;
+  const table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+  if (table.length > 0) {
+    document.getElementById(`navigator-btn-${n}`).classList.remove("hidden");
+  }
+});
+
+// Auto-fill distance for new users
+document.getElementById("distance").value = "4.5";
+
+// Add default event listeners for navigator buttons
+document.querySelectorAll("[id^='navigator-btn-']").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    const n = e.target.dataset.navigator;
+    selectNavigator(n);
+    // openTableWindow();
+  });
+});
+
+// Select first navigator by default
+selectNavigator("1");
