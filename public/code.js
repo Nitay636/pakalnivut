@@ -11,6 +11,27 @@ function updateCurrentTime() {
 setInterval(updateCurrentTime, 1000);
 updateCurrentTime();
 
+let wasTouchEvent = false;
+
+document.addEventListener(
+  "touchstart",
+  () => {
+    wasTouchEvent = true;
+  },
+  { passive: true }
+);
+
+document.addEventListener(
+  "mousedown",
+  (e) => {
+    if (wasTouchEvent) {
+      wasTouchEvent = false;
+      e.stopImmediatePropagation(); // prevent the fake mouse event
+    }
+  },
+  true
+); // capture phase
+
 // Calculate time gap between current and arrival time (HH:MM)
 function getTimeGap(current, arrival) {
   const [ch, cm] = current.split(":").map(Number);
