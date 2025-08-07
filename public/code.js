@@ -210,7 +210,7 @@ function renderTableRows(table, currentTime) {
         <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth} spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
           <span style="display:inline-flex;align-items:center;justify-content:center;">
             ${row.spots}
-            <span style="font-size:1em;margin-right:4px;color:#787878;">&#8593;</span>
+            <button onclick="increaseSpot(${idx})" style="font-size:1em;margin-right:4px;color:#787878;border:none;background:none;cursor:pointer;">&#8593;</button>
           </span>
         </td>
         <td class="border px-1 py-0.5 whitespace-normal ${columnWidth}">${row.delivering}</td>
@@ -529,3 +529,19 @@ document.querySelectorAll("[id^='navigator-btn-']").forEach((btn, idx) => {
 
 // Select first navigator by default
 selectNavigator(1);
+
+// -------------------- Spot Increment Logic --------------------
+function increaseSpot(rowIndex) {
+  const navigatorNum = document.getElementById("navigator-select").value;
+  const tableKey = `savedTable_${navigatorNum}`;
+  const table = JSON.parse(localStorage.getItem(tableKey) || "[]");
+  if (table[rowIndex]) {
+    table[rowIndex].spots = (parseInt(table[rowIndex].spots) || 0) + 1;
+    localStorage.setItem(tableKey, JSON.stringify(table));
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
+    renderTableRows(table, currentTime);
+  }
+}

@@ -49,13 +49,6 @@
         animation: fadeOut 0.2s ease-in forwards;
       }
 
-      table,
-      table td,
-      table th {
-        font-size: 10px;
-        line-height: 1.5;
-      }
-
       /* Sticky first column */
       #saved-table th:first-child,
       #saved-table td:first-child {
@@ -74,6 +67,17 @@
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+      }
+
+      /* Force 3rd and 4th columns to be narrow and wrap content */
+      #saved-table th:nth-child(3),
+      #saved-table td:nth-child(3),
+      #saved-table th:nth-child(4),
+      #saved-table td:nth-child(4) {
+        width: 6em !important;
+        max-width: 6em !important;
+        word-wrap: break-word;
+        white-space: normal !important;
       }
     </style>
 
@@ -281,7 +285,7 @@
                 id="saved-table"
                 style="min-width: unset; width: 100%"
                 dir="rtl"
-                class="w-full table-auto border border-collapse border-gray-400 text-[10px] text-center"
+                class="w-full table-auto border border-collapse border-gray-400 text-xs text-center"
               >
                 <thead class="bg-gray-100">
                   <tr>
