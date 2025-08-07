@@ -121,171 +121,135 @@ function clearTableData() {
 
 // -------------------- Table Rendering & Updating --------------------
 
+// Add this above your renderTableRows function:
+let sortState = {
+  column: null,
+  direction: "desc", // "asc" or "desc"
+};
+
+// Helper to sort table data
+function sortTableData(table, column, direction) {
+  return [...table].sort((a, b) => {
+    let valA = a[column];
+    let valB = b[column];
+    // Try to convert to number if possible
+    if (!isNaN(valA) && !isNaN(valB)) {
+      valA = Number(valA);
+      valB = Number(valB);
+    }
+    if (valA < valB) return direction === "asc" ? -1 : 1;
+    if (valA > valB) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
+}
+
 // Render the table rows for the selected navigator
 function renderTableRows(table, currentTime) {
+  const columnWidth = "";
   const tbody = document.getElementById("saved-table-body");
   tbody.innerHTML = "";
 
-  if (table.length) {
-    table.forEach((row, idx) => {
+  // Table columns for sorting
+  const columns = [
+    { key: "number", label: "חוליה" },
+    { key: "name", label: "שם המנווט" },
+    { key: "distance", label: "מרחק (ק״מ)" },
+    { key: "spots", label: "נקודות שנדקרו" },
+    { key: "delivering", label: "ש. שילוח" },
+    { key: "arrival", label: "ש. משימה" },
+    { key: "timeGap", label: "זמן שנותר" },
+  ];
+
+  // Render table header with triangle sort icons
+  const thead = document.createElement("thead");
+  thead.className = "bg-gray-100 sticky top-0 z-10";
+  const trHead = document.createElement("tr");
+  columns.forEach((col, idx) => {
+    trHead.innerHTML += `
+      <th class="border px-1 py-0.5 whitespace-normal ${columnWidth} ${
+      idx === columns.length - 1 ? "sticky right-0" : ""
+    }">
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+          <span>${col.label}</span>
+          <span style="display:inline-flex;flex-direction:column;align-items:center;gap:0;">
+            <span class="sort-triangle-up" data-col="${
+              col.key
+            }" style="cursor:pointer; width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:7px solid #888; margin-bottom:1px;"></span>
+            <span class="sort-triangle-down" data-col="${
+              col.key
+            }" style="cursor:pointer; width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:7px solid #888; margin-top:1px;"></span>
+          </span>
+        </span>
+      </th>
+    `;
+  });
+  thead.appendChild(trHead);
+
+  // Insert header before tbody
+  const tableElem = tbody.parentElement;
+  const oldThead = tableElem.querySelector("thead");
+  if (oldThead) tableElem.removeChild(oldThead);
+  tableElem.insertBefore(thead, tbody);
+
+  // Sort table if needed
+  let sortedTable = table;
+  if (sortState.column) {
+    sortedTable = sortTableData(table, sortState.column, sortState.direction);
+  }
+
+  // Render rows
+  if (sortedTable.length) {
+    sortedTable.forEach((row, idx) => {
       const gap = getTimeGap(currentTime, row.arrival);
       const gapColor = getTimeGapColor(gap);
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="border px-1 py-0.5">${row.number}</td>
-        <td class="border px-1 py-0.5">${row.name}</td>
-        <td class="border px-1 py-0.5">${row.distance}</td>
-        <td class="border px-1 py-0.5 spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
+        <td class="border px-0.5 py-0.5 font-bold sticky-col whitespace-normal ${columnWidth}">${row.number}</td>
+        <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth}">${row.name}</td>
+        <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth}">${row.distance}</td>
+        <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth} spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
           <span style="display:inline-flex;align-items:center;justify-content:center;">
             ${row.spots}
             <span style="font-size:1em;margin-right:4px;color:#787878;">&#8593;</span>
           </span>
         </td>
-        <td class="border px-1 py-0.5">${row.delivering}</td>
-        <td class="border px-1 py-0.5">${row.arrival}</td>
-        <td class="border px-1 py-0.5 ${gapColor}">${gap}</td>
+        <td class="border px-1 py-0.5 whitespace-normal ${columnWidth}">${row.delivering}</td>
+        <td class="border px-1 py-0.5 whitespace-normal ${columnWidth}">${row.arrival}</td>
+        <td class="border px-1 py-0.5 whitespace-normal ${columnWidth} ${gapColor}">${gap}</td>
       `;
       tbody.appendChild(tr);
     });
-
-    // Add event delegation for spot cell click and long press
-    if (!tbody._spotCellDelegated) {
-      let longPressTimer = null;
-      let longPressTriggered = false;
-
-      // Desktop: click and long press
-      tbody.addEventListener("mousedown", function (e) {
-        const cell = e.target.closest(".spot-cell");
-        if (!cell) return;
-        longPressTriggered = false;
-        longPressTimer = setTimeout(() => {
-          longPressTriggered = true;
-          const rowIdx = parseInt(cell.dataset.row, 10);
-          const navigatorNum =
-            document.getElementById("navigator-select").value;
-          const tableKey = `savedTable_${navigatorNum}`;
-          let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
-          table[rowIdx].spots = 0;
-          localStorage.setItem(tableKey, JSON.stringify(table));
-          const now = new Date();
-          const currentTime = `${String(now.getHours()).padStart(
-            2,
-            "0"
-          )}:${String(now.getMinutes()).padStart(2, "0")}`;
-          renderTableRows(table, currentTime);
-          updateTableTimeGaps();
-          longPressTimer = null;
-        }, 600);
-      });
-
-      tbody.addEventListener("mouseup", function () {
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      });
-
-      tbody.addEventListener("mouseleave", function () {
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-      });
-
-      tbody.addEventListener("click", function (e) {
-        if (window._justTouched) {
-          window._justTouched = false;
-          return; // Prevent double increment after touch
-        }
-        const cell = e.target.closest(".spot-cell");
-        if (!cell) return;
-        if (longPressTriggered) {
-          longPressTriggered = false;
-          return;
-        }
-        const rowIdx = parseInt(cell.dataset.row, 10);
-        const navigatorNum = document.getElementById("navigator-select").value;
-        const tableKey = `savedTable_${navigatorNum}`;
-        let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
-        table[rowIdx].spots = (table[rowIdx].spots || 0) + 1;
-        localStorage.setItem(tableKey, JSON.stringify(table));
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(
-          2,
-          "0"
-        )}:${String(now.getMinutes()).padStart(2, "0")}`;
-        renderTableRows(table, currentTime);
-        updateTableTimeGaps();
-      });
-
-      // Mobile: touch events
-      tbody.addEventListener("touchstart", function (e) {
-        const cell = e.target.closest(".spot-cell");
-        if (!cell) return;
-        longPressTriggered = false;
-        longPressTimer = setTimeout(() => {
-          longPressTriggered = true;
-          const rowIdx = parseInt(cell.dataset.row, 10);
-          const navigatorNum =
-            document.getElementById("navigator-select").value;
-          const tableKey = `savedTable_${navigatorNum}`;
-          let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
-          table[rowIdx].spots = 0;
-          localStorage.setItem(tableKey, JSON.stringify(table));
-          const now = new Date();
-          const currentTime = `${String(now.getHours()).padStart(
-            2,
-            "0"
-          )}:${String(now.getMinutes()).padStart(2, "0")}`;
-          renderTableRows(table, currentTime);
-          updateTableTimeGaps();
-          longPressTimer = null;
-        }, 600);
-      });
-
-      tbody.addEventListener("touchend", function (e) {
-        const cell = e.target.closest(".spot-cell");
-        if (!cell) return;
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-          if (!longPressTriggered) {
-            // Treat as tap/increment
-            const rowIdx = parseInt(cell.dataset.row, 10);
-            const navigatorNum =
-              document.getElementById("navigator-select").value;
-            const tableKey = `savedTable_${navigatorNum}`;
-            let table = JSON.parse(localStorage.getItem(tableKey) || "[]");
-            table[rowIdx].spots = (table[rowIdx].spots || 0) + 1;
-            localStorage.setItem(tableKey, JSON.stringify(table));
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(
-              2,
-              "0"
-            )}:${String(now.getMinutes()).padStart(2, "0")}`;
-            renderTableRows(table, currentTime);
-            updateTableTimeGaps();
-            window._justTouched = true; // Block next click event
-          }
-        }
-        longPressTriggered = false; // Always reset the flag
-      });
-
-      tbody.addEventListener("touchcancel", function () {
-        if (longPressTimer) {
-          clearTimeout(longPressTimer);
-          longPressTimer = null;
-        }
-        longPressTriggered = false;
-      });
-
-      tbody._spotCellDelegated = true;
-    }
   } else {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="7" class="border px-1 py-0.5 text-center">לא השתלחו חוליות עדיין</td>`;
+    tr.innerHTML = `<td colspan="7" class="border px-1 py-0.5 text-right">לא השתלחו חוליות עדיין</td>`;
     tbody.appendChild(tr);
   }
+
+  // Add event listeners for sort triangles (delegation)
+  thead
+    .querySelectorAll(".sort-triangle-up, .sort-triangle-down")
+    .forEach((triangle) => {
+      triangle.onclick = function () {
+        const col = this.dataset.col;
+        if (col) {
+          sortState.column = col;
+          sortState.direction = this.classList.contains("sort-triangle-up")
+            ? "asc"
+            : "desc";
+          // Get current table data and time
+          const navigatorNum =
+            document.getElementById("navigator-select").value;
+          const tableKey = `savedTable_${navigatorNum}`;
+          const tableData = JSON.parse(localStorage.getItem(tableKey) || "[]");
+          const now = new Date();
+          const currentTime = `${String(now.getHours()).padStart(
+            2,
+            "0"
+          )}:${String(now.getMinutes()).padStart(2, "0")}`;
+          renderTableRows(tableData, currentTime);
+        }
+      };
+    });
 }
 
 // Update only the time gap column for all rows
@@ -327,11 +291,21 @@ function openTableWindow() {
   // Update the table title with the navigator number
   const titleElem = document.getElementById("table-title");
   if (titleElem) {
-    titleElem.textContent = `היסטוריית שילוחים מנווט ${navigatorNum}`;
+    titleElem.textContent = `היסטוריית שילוחים ${navigatorNum}`;
   }
 
   document.getElementById("saved-table-container").classList.remove("hidden");
   updateTableTimeGaps();
+
+  // Scroll to the right side of the table when opened
+  setTimeout(() => {
+    const scrollDiv = document.querySelector(
+      "#saved-table-container [style*='overflow-x']"
+    );
+    if (scrollDiv) {
+      scrollDiv.scrollLeft = scrollDiv.scrollWidth;
+    }
+  }, 0);
 }
 
 // Update time gaps every 5 seconds when table is visible
@@ -494,10 +468,7 @@ function calculateTime() {
   const distance = parseFloat(document.getElementById("distance").value);
   const speed = parseFloat(document.getElementById("speed").value) || 2.5;
   const spots = 0;
-  let extraTime = 0;
-  if (document.getElementById("add-time-checkbox").checked) {
-    extraTime = parseInt(document.getElementById("extra-minutes").value) || 0;
-  }
+  let extraTime = parseInt(document.getElementById("extra-minutes").value) || 0;
   const now = new Date();
   const hoursNeeded = distance / speed;
   const arrivalDate = new Date(
