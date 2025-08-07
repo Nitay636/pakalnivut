@@ -1,0 +1,4 @@
+1. Stick the right header.   X
+2. Narrower the collumns in the table.   X
+3. increase the size of the spots button and make it work
+4. fix the error of which the sort isn't working well after a couple of times

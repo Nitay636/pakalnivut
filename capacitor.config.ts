@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "פק״ל ניווט",
   webDir: "build",
   server: {
-    url: "http://192.168.1.245:3000",
+    url: "http://192.168.1.145:3000",
     cleartext: true,
   },
 };
