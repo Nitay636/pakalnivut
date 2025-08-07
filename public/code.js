@@ -210,7 +210,7 @@ function renderTableRows(table, currentTime) {
         <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth} spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
           <span style="display:inline-flex;align-items:center;justify-content:center;">
             ${row.spots}
-            <button onclick="increaseSpot(${idx})" style="font-size:1em;margin-right:4px;color:#787878;border:none;background:none;cursor:pointer;">&#8593;</button>
+            <button class="spots-counter" onclick="increaseSpot(${idx})" >&#8593;</button>
           </span>
         </td>
         <td class="border px-1 py-0.5 whitespace-normal ${columnWidth}">${row.delivering}</td>
