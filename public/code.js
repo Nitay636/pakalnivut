@@ -123,8 +123,8 @@ function clearTableData() {
 
 // Add this above your renderTableRows function:
 let sortState = {
-  column: null,
-  direction: "desc", // "asc" or "desc"
+  column: "number",
+  direction: "asc", // "asc" or "desc"
 };
 
 // Helper to sort table data
@@ -192,14 +192,17 @@ function renderTableRows(table, currentTime) {
   tableElem.insertBefore(thead, tbody);
 
   // Sort table if needed
-  let sortedTable = table;
   if (sortState.column) {
-    sortedTable = sortTableData(table, sortState.column, sortState.direction);
+    table = sortTableData(table, sortState.column, sortState.direction);
+    const tableKey = `savedTable_${
+      document.getElementById("navigator-select").value
+    }`;
+    if (table.length > 0) localStorage.setItem(tableKey, JSON.stringify(table));
   }
 
   // Render rows
-  if (sortedTable.length) {
-    sortedTable.forEach((row, idx) => {
+  if (table.length) {
+    table.forEach((row, idx) => {
       const gap = getTimeGap(currentTime, row.arrival);
       const gapColor = getTimeGapColor(gap);
       const tr = document.createElement("tr");
@@ -210,7 +213,7 @@ function renderTableRows(table, currentTime) {
         <td class="border px-0.5 py-0.5 whitespace-normal ${columnWidth} spot-cell text-center" data-row="${idx}" style="cursor:pointer" title="לחץ להוספת נקודה">
           <span style="display:inline-flex;align-items:center;justify-content:center;">
             ${row.spots}
-            <button class="spots-counter" onclick="increaseSpot(${idx})" >&#8593;</button>
+            <button id="spots-counter${row.number}" class="spots-counter" onclick="increaseSpot(${idx})" >&#8593;</button>
           </span>
         </td>
         <td class="border px-1 py-0.5 whitespace-normal ${columnWidth}">${row.delivering}</td>
@@ -232,10 +235,15 @@ function renderTableRows(table, currentTime) {
       triangle.onclick = function () {
         const col = this.dataset.col;
         if (col) {
-          sortState.column = col;
-          sortState.direction = this.classList.contains("sort-triangle-up")
-            ? "asc"
-            : "desc";
+          if (sortState.column === col) {
+            // Toggle direction if same column clicked
+            sortState.direction =
+              sortState.direction === "asc" ? "desc" : "asc";
+          } else {
+            // Set new column and default to ascending
+            sortState.column = col;
+            sortState.direction = "asc";
+          }
           // Get current table data and time
           const navigatorNum =
             document.getElementById("navigator-select").value;
@@ -378,36 +386,6 @@ document.addEventListener(
   },
   false
 );
-
-// Enable editing on distance input via long press
-(function setupDistanceLongPress() {
-  const input = document.getElementById("distance");
-  let timer = null;
-
-  const start = (e) => {
-    e.preventDefault();
-    timer = setTimeout(() => {
-      input.readOnly = false;
-      input.focus();
-      input.select();
-    }, 400);
-  };
-
-  const end = () => {
-    clearTimeout(timer);
-  };
-
-  input.addEventListener("mousedown", start);
-  input.addEventListener("mouseup", end);
-  input.addEventListener("mouseleave", end);
-  input.addEventListener("touchstart", start, { passive: false });
-  input.addEventListener("touchend", end);
-  input.addEventListener("touchcancel", end);
-
-  input.addEventListener("blur", () => {
-    input.readOnly = true;
-  });
-})();
 
 // -------------------- Summary Bubble Logic --------------------
 
