@@ -48,6 +48,33 @@
       .bubble-animate-out {
         animation: fadeOut 0.2s ease-in forwards;
       }
+
+      table,
+      table td,
+      table th {
+        font-size: 10px;
+        line-height: 1.5;
+      }
+
+      /* Sticky first column */
+      #saved-table th:first-child,
+      #saved-table td:first-child {
+        position: sticky;
+        right: 0;
+        background: #f3f4f6;
+        z-index: 2;
+      }
+
+      /* Sticky header row */
+      #saved-table thead th,
+      #saved-table thead td {
+        position: sticky;
+        top: 0;
+        background: #f3f4f6;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
     </style>
 
     <meta charset="utf-8" />
@@ -127,7 +154,8 @@
 
       <!-- Speed Input Controls -->
       <div class="flex items-center gap-1 mb-4 justify-end">
-        <label for="speed" class="text-gray-700 select-none mr-2">מהירות</label>
+        <span class="text-gray-500">קמ״ש</span>
+
         <input
           id="speed"
           type="number"
@@ -136,25 +164,23 @@
           value="2.5"
           class="w-20 border border-gray-300 rounded p-2 text-center"
         />
-        <span class="text-gray-500">קמ״ש</span>
+        <label for="speed" class="text-gray-700 select-none mr-2">מהירות</label>
       </div>
 
       <!-- Extra Time Controls -->
       <div class="flex items-center gap-2 mb-4 justify-end">
-        <input id="add-time-checkbox" type="checkbox" class="accent-blue-500" />
-        <label for="add-time-checkbox" class="text-gray-700 select-none"
-          >הוספת זמן</label
-        >
+        <span class="text-gray-500">דקות</span>
         <input
           id="extra-minutes"
           type="number"
           min="0"
           step="1"
-          value="10"
+          value="0"
           class="w-20 border border-gray-300 rounded p-2 text-center"
-          style="margin-left: 8px"
         />
-        <span class="text-gray-500">דקות</span>
+        <label for="add-time-checkbox" class="text-gray-700 select-none"
+          >הוספת זמן</label
+        >
       </div>
 
       <!-- Place this above the name/number fields in your form -->
@@ -236,29 +262,41 @@
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
       >
         <div
-          class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl max-h-screen relative overflow-auto m-4"
+          class="bg-white p-6 rounded-xl shadow-xl w-full max-w-6xl max-h-screen relative m-4"
+          style="overflow: visible"
         >
           <h2 id="table-title" class="text-xl font-bold mb-4 text-center">
             היסטוריית שילוחים
           </h2>
           <div class="flex flex-col items-center justify-center">
-            <table
-              dir="rtl"
-              class="w-full table-auto border border-collapse text-xs text-center"
+            <div
+              style="
+                overflow-x: auto;
+                overflow-y: auto;
+                max-height: 70vh;
+                width: 100%;
+              "
             >
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="border px-1 py-0.5">חוליה</th>
-                  <th class="border px-1 py-0.5">שם המנווט</th>
-                  <th class="border px-1 py-0.5">מרחק (ק״מ)</th>
-                  <th class="border px-1 py-0.5">נקודות שנדקרו</th>
-                  <th class="border px-1 py-0.5">ש. שילוח</th>
-                  <th class="border px-1 py-0.5">ש. משימה</th>
-                  <th class="border px-1 py-0.5">זמן שנותר</th>
-                </tr>
-              </thead>
-              <tbody id="saved-table-body"></tbody>
-            </table>
+              <table
+                id="saved-table"
+                style="min-width: unset; width: 100%"
+                dir="rtl"
+                class="w-full table-auto border border-collapse border-gray-400 text-[10px] text-center"
+              >
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="whitespace-normal w-8 sticky right-0">חוליה</th>
+                    <th class="whitespace-normal w-8">שם המנווט</th>
+                    <th class="whitespace-normal w-8">מרחק (ק״מ)</th>
+                    <th class="whitespace-normal w-8">נקודות שנדקראו</th>
+                    <th class="whitespace-normal w-8">ש. שילוח</th>
+                    <th class="whitespace-normal w-8">ש. משימה</th>
+                    <th class="whitespace-normal w-8">זמן שנותר</th>
+                  </tr>
+                </thead>
+                <tbody id="saved-table-body"></tbody>
+              </table>
+            </div>
             <button
               onclick="closeTableWindow()"
               class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
